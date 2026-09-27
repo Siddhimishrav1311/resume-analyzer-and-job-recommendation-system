@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../app/generated/prisma"
@@ -10,4 +5,176 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+enum ExperienceLevel {
+  INTERN
+  ENTRY
+  JUNIOR
+  MID
+  SENIOR
+  LEAD
+}
+
+model Candidate {
+  id              String           @id @default(cuid())
+  name            String?
+  email           String?
+  phone           String?
+  location        String?
+  linkedin        String?
+  github          String?
+  portfolio       String?
+  summary         String?
+  experienceLevel ExperienceLevel?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+    
+
+  resumes         Resume[]
+  skills          CandidateSkill[]
+  education       Education[]
+  experience      Experience[]
+  projects        Project[]
+  certifications  Certification[]
+  achievements    Achievement[]
+  embedding       ResumeEmbedding?
+
+  @@index([email])
+  @@index([createdAt])
+}
+
+model Resume {
+  id            String    @id @default(cuid())
+  candidateId   String
+  originalName  String
+  storedName    String
+  fileType      String
+  fileSize      Int
+  filePath      String
+  rawText       String    @db.Text
+  structuredData Json?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  candidate     Candidate        @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  embedding     ResumeEmbedding?
+
+  @@index([candidateId])
+}
+
+model Skill {
+  id          String           @id @default(cuid())
+  name        String           @unique
+  category    String?
+  candidates  CandidateSkill[]
+
+  @@index([name])
+}
+
+model CandidateSkill {
+  id          String    @id @default(cuid())
+  candidateId String
+  skillId     String
+  proficiency Float?
+  years       Float?
+
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  skill       Skill     @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([candidateId, skillId])
+  @@index([candidateId])
+  @@index([skillId])
+}
+
+model Education {
+  id           String   @id @default(cuid())
+  candidateId  String
+  institution  String?
+  degree       String?
+  field        String?
+  startDate    String?
+  endDate      String?
+  grade        String?
+  description  String?  @db.Text
+
+  candidate    Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([candidateId])
+}
+
+model Experience {
+  id           String   @id @default(cuid())
+  candidateId  String
+  company      String?
+  role         String?
+  location     String?
+  startDate    String?
+  endDate      String?
+  description  String?  @db.Text
+  technologies Json?
+
+  candidate    Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([candidateId])
+}
+
+model Project {
+  id           String   @id @default(cuid())
+  candidateId  String
+  name         String?
+  description  String?  @db.Text
+  technologies Json?
+  url          String?
+  role         String?
+
+  candidate    Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([candidateId])
+}
+
+model Certification {
+  id           String   @id @default(cuid())
+  candidateId  String
+  name         String?
+  issuer       String?
+  issueDate    String?
+  expiryDate   String?
+  credentialId String?
+  url          String?
+
+  candidate    Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([candidateId])
+}
+
+model Achievement {
+  id          String   @id @default(cuid())
+  candidateId String
+  title       String?
+  description String?  @db.Text
+  date        String?
+
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([candidateId])
+}
+
+model ResumeEmbedding {
+  id          String   @id @default(cuid())
+  candidateId String   @unique
+  resumeId    String   @unique
+
+  model       String
+  dimensions  Int
+  content     String   @db.Text
+
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  resume      Resume    @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([candidateId])
+  @@index([resumeId])
 }
