@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "CareerMatch | Find work that fits",
+  title: "CareerMatch | Resume Analysis and Candidate Search",
   description:
-    "Upload your resume.",
+    "Analyze resumes, measure job suitability, and search candidates with CareerMatch.",
 };
 
 export default function RootLayout({

@@ -1,0 +1,37 @@
+[
+  {
+    "id": "data-analyst",
+    "title": "Data Analyst",
+    "description": "We are looking for a Data Analyst who can analyze datasets, clean and transform data, write SQL queries, create dashboards and reports, identify business insights, and communicate findings. Required skills include Python, SQL, Excel, statistics, data visualization, Power BI, Tableau, pandas, numpy, and basic machine learning."
+  },
+  {
+    "id": "data-scientist",
+    "title": "Data Scientist",
+    "description": "We are looking for a Data Scientist who can analyze complex datasets, build machine learning models, perform statistical analysis, engineer features, evaluate models, and communicate analytical results. Required skills include Python, SQL, statistics, machine learning, pandas, numpy, scikit-learn, TensorFlow or PyTorch, data visualization, and NLP."
+  },
+  {
+    "id": "data-engineer",
+    "title": "Data Engineer",
+    "description": "We are looking for a Data Engineer who can build and maintain data pipelines, develop ETL processes, work with databases and cloud platforms, process large datasets, and support data infrastructure. Required skills include Python, SQL, Spark, Hadoop, Kafka, ETL, data warehousing, PostgreSQL, AWS, Azure, GCP, Docker, and Linux."
+  },
+  {
+    "id": "business-analyst",
+    "title": "Business Analyst",
+    "description": "We are looking for a Business Analyst who can gather business requirements, analyze processes and data, create reports, communicate with stakeholders, and identify opportunities for business improvement. Required skills include SQL, Excel, Power BI, Tableau, data analysis, statistics, requirements gathering, documentation, communication, and problem solving."
+  },
+  {
+    "id": "machine-learning-engineer",
+    "title": "Machine Learning Engineer",
+    "description": "We are looking for a Machine Learning Engineer who can develop, train, evaluate, and deploy machine learning models. Required skills include Python, machine learning, deep learning, scikit-learn, TensorFlow, PyTorch, pandas, numpy, SQL, APIs, Docker, cloud platforms, Git, and model deployment."
+  },
+  {
+    "id": "software-engineer",
+    "title": "Software Engineer",
+    "description": "We are looking for a Software Engineer who can design, develop, test, debug, and maintain software applications. Required skills include programming, Python, Java, JavaScript, TypeScript, SQL, Git, GitHub, REST APIs, databases, data structures, algorithms, software development, and problem solving."
+  },
+  {
+    "id": "cloud-engineer",
+    "title": "Cloud Engineer",
+    "description": "We are looking for a Cloud Engineer who can design, deploy, maintain, and monitor cloud infrastructure and applications. Required skills include AWS, Azure, GCP, Linux, Docker, Kubernetes, networking, Python, infrastructure automation, Git, CI/CD, security, monitoring, and cloud architecture."
+  }
+]
