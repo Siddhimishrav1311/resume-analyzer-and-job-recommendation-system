@@ -1,9 +1,8 @@
-
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { calculateRoleSuitability } from "@/app/actions/roleSuitability";
 
 type ResumeData = {
@@ -33,113 +32,46 @@ type AnalysisData = {
 };
 
 const SKILL_LIBRARY = [
-  "Python",
-  "SQL",
-  "Java",
-  "JavaScript",
-  "TypeScript",
-  "C++",
-  "C",
-  "React",
-  "Next.js",
-  "Node.js",
-  "HTML",
-  "CSS",
-  "Pandas",
-  "NumPy",
-  "Scikit-learn",
-  "TensorFlow",
-  "PyTorch",
-  "Machine Learning",
-  "Deep Learning",
-  "NLP",
-  "Data Analysis",
-  "Data Visualization",
-  "Power BI",
-  "Tableau",
-  "Excel",
-  "AWS",
-  "Azure",
-  "GCP",
-  "Docker",
-  "Kubernetes",
-  "Git",
-  "GitHub",
-  "MongoDB",
-  "PostgreSQL",
-  "MySQL",
-  "Spark",
-  "Hadoop",
-  "Linux",
+  "Python", "SQL", "Java", "JavaScript", "TypeScript",
+  "C++", "C", "React", "Next.js", "Node.js", "HTML", "CSS",
+  "Pandas", "NumPy", "Scikit-learn", "TensorFlow", "PyTorch",
+  "Machine Learning", "Deep Learning", "NLP", "Data Analysis",
+  "Data Visualization", "Power BI", "Tableau", "Excel", "AWS",
+  "Azure", "GCP", "Docker", "Kubernetes", "Git", "GitHub",
+  "MongoDB", "PostgreSQL", "MySQL", "Spark", "Hadoop", "Linux",
 ];
 
 const ROLE_SKILLS: Record<string, string[]> = {
   "Data Analyst": [
-    "Python",
-    "SQL",
-    "Excel",
-    "Pandas",
-    "Data Analysis",
-    "Data Visualization",
-    "Power BI",
-    "Tableau",
+    "Python", "SQL", "Excel", "Pandas", "Data Analysis",
+    "Data Visualization", "Power BI", "Tableau",
   ],
   "Data Scientist": [
-    "Python",
-    "SQL",
-    "Pandas",
-    "NumPy",
-    "Scikit-learn",
-    "Machine Learning",
-    "Data Analysis",
+    "Python", "SQL", "Pandas", "NumPy", "Scikit-learn",
+    "Machine Learning", "Data Analysis",
   ],
   "Data Engineer": [
-    "Python",
-    "SQL",
-    "Spark",
-    "Hadoop",
-    "PostgreSQL",
-    "Docker",
-    "AWS",
-    "Azure",
+    "Python", "SQL", "Spark", "Hadoop", "PostgreSQL",
+    "Docker", "AWS", "Azure",
   ],
   "Business Analyst": [
-    "SQL",
-    "Excel",
-    "Power BI",
-    "Tableau",
-    "Data Analysis",
+    "SQL", "Excel", "Power BI", "Tableau", "Data Analysis",
   ],
   "Machine Learning Engineer": [
-    "Python",
-    "Scikit-learn",
-    "TensorFlow",
-    "PyTorch",
-    "Machine Learning",
-    "Deep Learning",
-    "Docker",
+    "Python", "Scikit-learn", "TensorFlow", "PyTorch",
+    "Machine Learning", "Deep Learning", "Docker",
   ],
   "Software Engineer": [
-    "Python",
-    "Java",
-    "JavaScript",
-    "TypeScript",
-    "React",
-    "Node.js",
-    "Git",
+    "Python", "Java", "JavaScript", "TypeScript",
+    "React", "Node.js", "Git",
   ],
   "Cloud Engineer": [
-    "AWS",
-    "Azure",
-    "GCP",
-    "Docker",
-    "Kubernetes",
-    "Linux",
-    "Python",
+    "AWS", "Azure", "GCP", "Docker", "Kubernetes",
+    "Linux", "Python",
   ],
 };
 
-const sectionVariants = {
+const sectionVariants: Variants = {
   hidden: {
     opacity: 0,
     y: 28,
@@ -149,12 +81,12 @@ const sectionVariants = {
     y: 0,
     transition: {
       duration: 0.55,
-      ease: [0.22, 1, 0.36, 1],
+      ease: "easeInOut",
     },
   },
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: {
     opacity: 0,
     y: 18,
@@ -164,7 +96,7 @@ const itemVariants = {
     y: 0,
     transition: {
       duration: 0.4,
-      ease: [0.22, 1, 0.36, 1],
+      ease: "easeInOut",
     },
   },
 };
@@ -326,12 +258,9 @@ function AnimatedScore({
         1
       );
 
-      const eased =
-        1 - Math.pow(1 - progress, 3);
+      const eased = 1 - Math.pow(1 - progress, 3);
 
-      setDisplayScore(
-        Math.round(score * eased)
-      );
+      setDisplayScore(Math.round(score * eased));
 
       if (progress < 1) {
         frame = requestAnimationFrame(animate);
@@ -392,7 +321,7 @@ function ExpandableSection({
           transition={{ duration: 0.25 }}
           className="text-white/40"
         >
-          ↓
+          â†“
         </motion.span>
       </button>
 
@@ -413,7 +342,7 @@ function ExpandableSection({
             }}
             transition={{
               duration: 0.3,
-              ease: [0.22, 1, 0.36, 1],
+              ease: "easeInOut",
             }}
           >
             <div className="border-t border-white/[0.08] p-7 sm:p-9">
@@ -560,8 +489,7 @@ export default function AnalyzePage() {
 
         setAnalysis({
           ...parsedAnalysis,
-          missingSkills:
-            parsedAnalysis.missingSkills,
+          missingSkills: parsedAnalysis.missingSkills,
         });
       } catch (error) {
         console.error(
@@ -1031,8 +959,7 @@ export default function AnalyzePage() {
             </motion.div>
           )}
         </motion.section>
-
-        {/* SKILLS */}
+                {/* SKILLS */}
 
         <motion.section
           initial="hidden"
@@ -1205,7 +1132,7 @@ export default function AnalyzePage() {
               transition={{ duration: 0.25 }}
               className="text-white/40"
             >
-              ↓
+              â†“
             </motion.span>
           </button>
 
@@ -1226,7 +1153,7 @@ export default function AnalyzePage() {
                 }}
                 transition={{
                   duration: 0.35,
-                  ease: [0.22, 1, 0.36, 1],
+                  ease: "easeInOut",
                 }}
               >
                 <div className="max-h-[500px] overflow-y-auto p-7 sm:p-9">
