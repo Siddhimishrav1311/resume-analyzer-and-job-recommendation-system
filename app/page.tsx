@@ -1,402 +1,338 @@
-"use client";
+﻿"use client";
 
-import { motion } from "framer-motion";
-import Link from "next/link";
+import { ChangeEvent, DragEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 
-const navItems = ["Workflow", "Use Cases", "Pricing", "FAQ"];
+export default function UploadPage() {
+  const router = useRouter();
 
-export default function HomePage() {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleFile = (file: File) => {
+    setError("");
+
+    const extension = file.name
+      .substring(file.name.lastIndexOf("."))
+      .toLowerCase();
+
+    if (![".pdf", ".docx"].includes(extension)) {
+      setError("Please upload a PDF or DOCX resume.");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Resume size should be less than 5 MB.");
+      return;
+    }
+
+    setSelectedFile(file);
+  };
+
+  const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) handleFile(file);
+  };
+
+  const handleDrop = (event: DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+
+    const file = event.dataTransfer.files?.[0];
+    if (file) handleFile(file);
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) {
+      setError("Please select a resume first.");
+      return;
+    }
+
+    setIsUploading(true);
+    setError("");
+
+    try {
+      const formData = new FormData();
+      formData.append("resume", selectedFile);
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Upload failed.");
+      }
+
+      if (!result.analysis) {
+        throw new Error("Resume analysis was not returned by the backend.");
+      }
+
+      sessionStorage.setItem(
+        "resumeAnalysis",
+        JSON.stringify({
+          file: result.file,
+          extractedText: result.extractedText,
+          textLength: result.textLength,
+          analysis: result.analysis,
+        })
+      );
+
+      router.push("/dashboard");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong while uploading."
+      );
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
-    <main className="min-h-screen overflow-hidden bg-[#080a09] text-[#f5f3ec]">
-      {/* Background atmosphere */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute left-1/2 top-[-420px] h-[850px] w-[1100px] -translate-x-1/2 rounded-full bg-[#315c4a]/20 blur-[160px]" />
+    <main className="cm-home relative min-h-screen overflow-hidden text-[#17201f]">
+      <div className="cm-background absolute inset-0" />
 
-        <div className="absolute left-[8%] top-[30%] h-[420px] w-[420px] rounded-full bg-[#315c4a]/10 blur-[150px]" />
+      <section className="relative mx-auto grid min-h-screen max-w-[1580px] items-center gap-12 px-6 py-16 sm:px-10 lg:grid-cols-[1.02fr_0.98fr] lg:gap-10 lg:px-16 xl:px-20">
+        <div className="relative z-10 mx-auto w-full max-w-[760px]">
+          <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-violet-200/80 bg-white/65 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-violet-700 shadow-sm backdrop-blur">
+            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            AI Resume Analyzer
+          </div>
 
-        <div className="absolute right-[-10%] top-[20%] h-[500px] w-[500px] rounded-full bg-[#8eb8a3]/[0.05] blur-[150px]" />
+          <h1 className="max-w-[760px] text-5xl font-bold leading-[1.12] tracking-[-0.055em] text-[#17201f] sm:text-6xl xl:text-[68px]">
+            Is your resume
+            <br />
+            <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-violet-600 bg-clip-text text-transparent">
+              good enough?
+            </span>
+          </h1>
 
-        <div
-          className="absolute inset-0 opacity-[0.035]"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle at center, #ffffff 1px, transparent 1px)",
-            backgroundSize: "42px 42px",
-          }}
-        />
+          <p className="mt-7 max-w-[690px] text-base leading-8 text-[#485653] sm:text-lg">
+            Analyze your resume, understand its strengths, identify missing
+            skills and evaluate its ATS readiness with CareerMatch.
+          </p>
 
-        <div
-          className="absolute inset-0 opacity-[0.02]"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle at center, #ffffff 1px, transparent 1px)",
-            backgroundSize: "97px 97px",
-            backgroundPosition: "20px 30px",
-          }}
-        />
-      </div>
-
-      {/* Navigation */}
-      <nav className="relative z-20 mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-6 sm:px-8 lg:px-10">
-        {/* Logo */}
-        <Link
-          href="/"
-          className="group flex items-center gap-2 text-sm font-semibold tracking-[-0.02em] text-white"
-        >
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/10 bg-white/[0.06] text-xs text-[#b7d2c3] transition-all duration-300 group-hover:border-[#9fc4b0]/30 group-hover:bg-[#9fc4b0]/10">
-            C
-          </span>
-
-          <span>
-            Career<span className="text-[#9fc4b0]">Match</span>
-          </span>
-        </Link>
-
-        {/* Center navigation */}
-        <div className="absolute left-1/2 hidden -translate-x-1/2 items-center rounded-full border border-white/[0.08] bg-white/[0.035] p-1 backdrop-blur-xl md:flex">
-          {navItems.map((item, index) => (
-            <Link
-              key={item}
-              href={`#${item.toLowerCase().replace(" ", "-")}`}
-              className={`rounded-full px-4 py-2 text-[11px] font-medium transition-all duration-300 ${
-                index === 0
-                  ? "bg-white/[0.08] text-white"
-                  : "text-white/40 hover:bg-white/[0.05] hover:text-white/80"
-              }`}
+          <div
+            className={`mt-10 rounded-2xl border border-dashed p-7 text-center shadow-[0_18px_60px_rgba(55,105,100,0.08)] backdrop-blur-xl transition-all duration-300 sm:p-9 ${
+              isDragging
+                ? "border-emerald-500 bg-emerald-50/90"
+                : "border-emerald-400/90 bg-white/65 hover:border-violet-400 hover:bg-white/80"
+            }`}
+          >
+            <label
+              onDragOver={(event) => {
+                event.preventDefault();
+                setIsDragging(true);
+              }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={handleDrop}
+              className="flex cursor-pointer flex-col items-center"
             >
-              {item}
-            </Link>
-          ))}
-        </div>
-
-        {/* Right actions */}
-        <div className="flex items-center gap-3">
-          <Link
-            href="/login"
-            className="hidden text-xs font-medium text-white/45 transition-colors hover:text-white sm:block"
-          >
-            Log in
-          </Link>
-
-          <Link
-            href="/analyze"
-            className="group rounded-full border border-[#9fc4b0]/20 bg-[#9fc4b0]/10 px-4 py-2.5 text-[11px] font-semibold text-[#c8ddd1] backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5 hover:border-[#9fc4b0]/40 hover:bg-[#9fc4b0]/15 hover:shadow-[0_8px_35px_rgba(142,184,163,0.12)]"
-          >
-            <span className="mr-1.5 transition-transform duration-300 group-hover:rotate-12">
-              ✦
-            </span>
-            Analyze Resume
-          </Link>
-        </div>
-      </nav>
-
-      {/* Hero */}
-      <section className="relative z-10 mx-auto flex min-h-[calc(100vh-90px)] w-full max-w-7xl flex-col items-center px-5 pb-14 pt-16 text-center sm:px-8 sm:pt-24 lg:px-10 lg:pt-28">
-        {/* Badge */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="inline-flex items-center rounded-full border border-white/[0.1] bg-white/[0.035] px-4 py-2 text-[10px] font-medium uppercase tracking-[0.14em] text-white/50 shadow-[0_0_40px_rgba(142,184,163,0.04)] backdrop-blur-xl"
-        >
-          <span className="mr-2 text-[#a9c6b5]">✦</span>
-          AI-powered resume intelligence
-        </motion.div>
-
-        {/* Heading */}
-        <motion.h1
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{
-            duration: 0.8,
-            delay: 0.1,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-          className="mt-8 max-w-5xl text-[clamp(3rem,8vw,6.8rem)] font-semibold leading-[0.94] tracking-[-0.065em] text-white"
-        >
-          Know where your{" "}
-          <span className="font-serif font-normal italic text-[#b9a982]">
-            resume
-          </span>{" "}
-          fits.
-        </motion.h1>
-
-        {/* Subheading */}
-        <motion.p
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{
-            duration: 0.7,
-            delay: 0.25,
-          }}
-          className="mt-7 max-w-2xl text-sm leading-7 text-white/40 sm:text-base"
-        >
-          CareerMatch analyzes your resume, measures your fit against real
-          roles, and turns your experience into structured intelligence for
-          candidates and recruiters.
-        </motion.p>
-
-        {/* CTA */}
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{
-            duration: 0.7,
-            delay: 0.35,
-          }}
-          className="mt-9 flex flex-col items-center gap-3 sm:flex-row"
-        >
-          {/* Primary CTA - lowered brightness */}
-          <Link
-            href="/upload"
-            className="group inline-flex items-center justify-center rounded-full border border-white/[0.1] bg-white/[0.08] px-7 py-3.5 text-xs font-medium text-white/65 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-white/[0.16] hover:bg-white/[0.12] hover:text-white/85 hover:shadow-[0_12px_40px_rgba(255,255,255,0.05)]"
-          >
-            Analyze my resume
-            <span className="ml-2 transition-transform duration-300 group-hover:translate-x-1">
-              →
-            </span>
-          </Link>
-
-          {/* Secondary CTA */}
-          <Link
-            href="#workflow"
-            className="group inline-flex items-center justify-center rounded-full border border-white/[0.1] bg-white/[0.035] px-7 py-3.5 text-xs font-medium text-white/65 backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-white/[0.18] hover:bg-white/[0.06] hover:text-white"
-          >
-            <span className="mr-2 flex h-4 w-4 items-center justify-center rounded-full border border-white/30 text-[7px] transition-transform duration-300 group-hover:scale-110">
-              ▶
-            </span>
-            See how it works
-          </Link>
-        </motion.div>
-
-        {/* Product preview */}
-        <motion.div
-          initial={{ opacity: 0, y: 45, scale: 0.97 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{
-            duration: 1,
-            delay: 0.5,
-            ease: [0.22, 1, 0.36, 1],
-          }}
-          className="relative mt-20 w-full max-w-5xl"
-        >
-          {/* Glow */}
-          <div className="absolute left-1/2 top-1/2 h-[300px] w-[70%] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#315c4a]/15 blur-[100px]" />
-
-          {/* Dashboard glass */}
-          <div className="relative overflow-hidden rounded-[26px] border border-white/[0.1] bg-[#111411]/90 text-left shadow-[0_40px_120px_rgba(0,0,0,0.5)] backdrop-blur-2xl">
-            {/* Window header */}
-            <div className="flex items-center justify-between border-b border-white/[0.07] px-5 py-4">
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-white/15" />
-                <span className="h-2 w-2 rounded-full bg-white/15" />
-                <span className="h-2 w-2 rounded-full bg-white/15" />
+              <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-100 to-violet-100 text-emerald-700">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  className="h-7 w-7"
+                >
+                  <path d="M12 16V4m0 0L7 9m5-5 5 5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M4 16.5v2A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5v-2" strokeLinecap="round" />
+                </svg>
               </div>
 
-              <span className="text-[9px] uppercase tracking-[0.18em] text-white/25">
-                CareerMatch
+              <span className="text-lg font-medium text-[#293632]">
+                {selectedFile
+                  ? selectedFile.name
+                  : "Drop your resume here or choose a file"}
               </span>
 
-              <span className="text-[9px] text-white/20">
-                Resume intelligence
+              <span className="mt-2 text-sm text-[#71817b]">
+                PDF & DOCX only · Maximum file size 5 MB
+              </span>
+
+              <input
+                type="file"
+                accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                onChange={handleInputChange}
+                className="sr-only"
+              />
+            </label>
+
+            {selectedFile && (
+              <button
+                type="button"
+                onClick={() => setSelectedFile(null)}
+                className="mt-3 text-sm font-medium text-violet-700 hover:text-violet-900"
+              >
+                Remove selected file
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={handleUpload}
+              disabled={isUploading}
+              className="mt-6 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-8 py-3.5 text-base font-bold text-white shadow-lg shadow-emerald-600/20 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-emerald-600/25 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isUploading
+                ? "Analyzing your resume..."
+                : "Upload Your Resume"}
+            </button>
+
+            {error && (
+              <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+                {error}
+              </p>
+            )}
+
+            <div className="mt-6 flex items-center justify-center gap-2 text-xs font-medium text-[#63716d] sm:text-sm">
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                className="h-4 w-4"
+              >
+                <rect x="5" y="10" width="14" height="11" rx="2" />
+                <path d="M8 10V7a4 4 0 0 1 8 0v3" strokeLinecap="round" />
+              </svg>
+              Your resume is processed securely.
+            </div>
+          </div>
+        </div>
+
+        <div className="relative mx-auto hidden w-full max-w-[700px] lg:block">
+          <div className="absolute -inset-8 rounded-[42px] bg-gradient-to-br from-emerald-200/60 via-white/30 to-violet-300/60 blur-2xl" />
+
+          <div className="relative rotate-[1deg] rounded-[28px] border border-white/90 bg-white/80 p-5 shadow-[0_30px_90px_rgba(64,75,115,0.18)] backdrop-blur-xl">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 text-sm font-bold text-white">
+                  C
+                </div>
+                <span className="font-semibold tracking-tight text-slate-800">
+                  CareerMatch
+                </span>
+              </div>
+              <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-semibold text-emerald-700">
+                RESUME INSIGHTS
               </span>
             </div>
 
-            {/* Preview content */}
-            <div className="grid gap-0 md:grid-cols-[0.8fr_1.2fr]">
-              {/* Profile */}
-              <div className="border-b border-white/[0.07] p-7 md:border-b-0 md:border-r">
-                <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-[#8eb8a3]">
-                  Candidate profile
+            <div className="mt-5 grid grid-cols-[145px_1fr] gap-4">
+              <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+                <p className="text-center text-xs font-semibold text-slate-600">
+                  Resume Score
                 </p>
-
-                <h3 className="mt-3 text-xl font-medium tracking-[-0.04em] text-white/90">
-                  Resume analyzed
-                </h3>
-
-                <p className="mt-3 text-xs leading-5 text-white/30">
-                  Experience, skills, education and projects have been
-                  converted into structured profile data.
+                <div className="mx-auto mt-5 flex h-20 w-20 items-center justify-center rounded-full border-[9px] border-emerald-400 border-b-slate-100">
+                  <span className="text-xl font-bold text-emerald-600">
+                    92
+                  </span>
+                </div>
+                <p className="mt-2 text-center text-[10px] text-slate-400">
+                  Illustrative preview
                 </p>
-
-                <div className="mt-7 flex flex-wrap gap-2">
-                  {["Python", "SQL", "Machine Learning", "AWS"].map(
-                    (skill) => (
-                      <span
-                        key={skill}
-                        className="rounded-full border border-white/[0.08] bg-white/[0.035] px-3 py-1.5 text-[9px] text-white/45"
-                      >
-                        {skill}
-                      </span>
+                <div className="mt-5 space-y-3">
+                  {["Content", "Skills", "Experience", "Formatting"].map(
+                    (item, index) => (
+                      <div key={item}>
+                        <div className="flex justify-between text-[9px] text-slate-500">
+                          <span>{item}</span>
+                          <span>{[90, 84, 76, 88][index]}%</span>
+                        </div>
+                        <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                          <div
+                            className="h-full rounded-full bg-emerald-400"
+                            style={{ width: `${[90, 84, 76, 88][index]}%` }}
+                          />
+                        </div>
+                      </div>
                     )
                   )}
                 </div>
               </div>
 
-              {/* Matching */}
-              <div className="p-7">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-white/25">
-                      Job suitability
-                    </p>
-
-                    <h3 className="mt-2 text-xl font-medium tracking-[-0.04em] text-white/90">
-                      Roles matching your profile
-                    </h3>
+              <div className="space-y-4">
+                <div className="rounded-2xl bg-[#edf1fb] p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold tracking-wide text-slate-700">
+                      ATS CONTENT ANALYSIS
+                    </span>
+                    <span className="rounded-full bg-white px-3 py-1 text-[9px] text-slate-500">
+                      PREVIEW
+                    </span>
                   </div>
 
-                  <span className="rounded-full border border-[#8eb8a3]/15 bg-[#8eb8a3]/[0.06] px-3 py-1.5 text-[8px] uppercase tracking-wider text-[#9fc4b0]">
-                    ML Match
-                  </span>
+                  <div className="mt-5 rounded-xl border border-slate-100 bg-white p-4">
+                    <p className="text-[10px] font-semibold text-slate-600">
+                      KEYWORD COMPATIBILITY
+                    </p>
+                    <div className="mt-3 space-y-2">
+                      <div className="h-2 rounded-full bg-slate-100" />
+                      <div className="h-2 w-[88%] rounded-full bg-slate-100" />
+                      <div className="h-2 w-[72%] rounded-full bg-slate-100" />
+                    </div>
+                    <div className="mt-5 rounded-lg bg-slate-50 p-4">
+                      <div className="h-2 rounded-full bg-slate-200" />
+                      <div className="mt-3 h-2 w-[90%] rounded-full bg-slate-200" />
+                      <div className="mt-3 h-2 w-[76%] rounded-full bg-slate-200" />
+                      <div className="mt-3 h-2 w-[84%] rounded-full bg-slate-200" />
+                    </div>
+                  </div>
                 </div>
 
-                <div className="mt-6 space-y-3">
-                  {[
-                    "Data Analyst",
-                    "Data Scientist",
-                    "Data Engineer",
-                  ].map((role, index) => (
-                    <motion.div
-                      key={role}
-                      initial={{ opacity: 0, x: 10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{
-                        delay: 1 + index * 0.12,
-                        duration: 0.5,
-                      }}
-                      className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/[0.05] text-[10px] text-white/35">
-                          {index + 1}
-                        </span>
-
-                        <span className="text-xs text-white/60">
-                          {role}
-                        </span>
-                      </div>
-
-                      <span className="text-[9px] uppercase tracking-wider text-white/25">
-                        Match
-                      </span>
-                    </motion.div>
-                  ))}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
+                    <p className="text-[10px] text-slate-400">SKILLS IDENTIFIED</p>
+                    <p className="mt-2 text-2xl font-bold text-slate-800">24</p>
+                    <div className="mt-2 h-1.5 rounded-full bg-emerald-100">
+                      <div className="h-1.5 w-4/5 rounded-full bg-emerald-400" />
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
+                    <p className="text-[10px] text-slate-400">ATS READINESS</p>
+                    <p className="mt-2 text-2xl font-bold text-violet-600">Good</p>
+                    <p className="mt-2 text-[10px] text-slate-400">
+                      Example interface preview
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </motion.div>
 
-        {/* Capability strip */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{
-            duration: 0.7,
-            delay: 0.7,
-          }}
-          className="mt-14 grid w-full max-w-4xl border-y border-white/[0.07] sm:grid-cols-3"
-        >
-          {/* Capability 1 */}
-          <div className="flex items-center justify-center gap-3 px-5 py-6 sm:border-r sm:border-white/[0.07]">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.035] text-[#9fc4b0]">
-              ✦
-            </div>
-
-            <div className="text-left">
-              <p className="text-xs font-medium text-white/65">
-                Resume analysis
-              </p>
-
-              <p className="mt-0.5 text-[10px] text-white/25">
-                Structured automatically
-              </p>
+            <div className="mt-4 rounded-xl border border-slate-100 bg-white p-4">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                <span className="text-[10px] font-semibold text-slate-600">
+                  RESUME ANALYSIS OVERVIEW
+                </span>
+              </div>
+              <div className="mt-3 grid grid-cols-3 gap-3">
+                <div className="h-2 rounded-full bg-emerald-100" />
+                <div className="h-2 rounded-full bg-violet-100" />
+                <div className="h-2 rounded-full bg-slate-100" />
+              </div>
             </div>
           </div>
 
-          {/* Capability 2 */}
-          <div className="flex items-center justify-center gap-3 border-t border-white/[0.07] px-5 py-6 sm:border-t-0 sm:border-r">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.035] text-[#9fc4b0]">
-              ↗
-            </div>
-
-            <div className="text-left">
-              <p className="text-xs font-medium text-white/65">
-                ML suitability
-              </p>
-
-              <p className="mt-0.5 text-[10px] text-white/25">
-                Resume-to-role matching
-              </p>
-            </div>
+          <div className="absolute -bottom-7 -left-8 rounded-2xl border border-white bg-white/90 px-5 py-4 shadow-xl backdrop-blur">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+              CareerMatch
+            </p>
+            <p className="mt-1 text-sm font-semibold text-slate-700">
+              Resume intelligence
+            </p>
           </div>
-
-          {/* Capability 3 */}
-          <div className="flex items-center justify-center gap-3 border-t border-white/[0.07] px-5 py-6 sm:border-t-0">
-            <div className="flex -space-x-2">
-              <span className="h-7 w-7 rounded-full border-2 border-[#080a09] bg-[#315c4a]" />
-              <span className="h-7 w-7 rounded-full border-2 border-[#080a09] bg-[#8a8067]" />
-              <span className="h-7 w-7 rounded-full border-2 border-[#080a09] bg-[#68766e]" />
-            </div>
-
-            <div className="text-left">
-              <p className="text-xs font-medium text-white/65">
-                Candidate search
-              </p>
-
-              <p className="mt-0.5 text-[10px] text-white/25">
-                Built for recruiters
-              </p>
-            </div>
-          </div>
-        </motion.div>
-      </section>
-
-      {/* Workflow section */}
-      <section
-        id="workflow"
-        className="relative z-10 mx-auto max-w-7xl px-5 pb-28 sm:px-8 lg:px-10"
-      >
-        <div className="grid gap-5 md:grid-cols-3">
-          {[
-            {
-              number: "01",
-              title: "Upload",
-              text: "Upload a resume and let CareerMatch extract the information that matters.",
-            },
-            {
-              number: "02",
-              title: "Understand",
-              text: "Resume content is transformed into structured skills, experience and profile intelligence.",
-            },
-            {
-              number: "03",
-              title: "Match",
-              text: "Measure how strongly a candidate fits a role using the trained suitability model.",
-            },
-          ].map((item) => (
-            <motion.div
-              key={item.number}
-              whileHover={{ y: -5 }}
-              transition={{ duration: 0.3 }}
-              className="rounded-[22px] border border-white/[0.07] bg-white/[0.025] p-7 backdrop-blur-xl"
-            >
-              <span className="text-[10px] font-semibold tracking-[0.16em] text-[#8eb8a3]">
-                {item.number}
-              </span>
-
-              <h2 className="mt-5 text-xl font-medium tracking-[-0.04em] text-white/90">
-                {item.title}
-              </h2>
-
-              <p className="mt-3 text-sm leading-6 text-white/35">
-                {item.text}
-              </p>
-            </motion.div>
-          ))}
         </div>
       </section>
     </main>
   );
 }
+

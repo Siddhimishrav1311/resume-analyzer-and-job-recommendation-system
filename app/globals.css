@@ -1,50 +1,9 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f5f5f2;
-  --foreground: #171715;
-
-  --surface: #fbfbf8;
-  --surface-raised: #ffffff;
-
-  --muted: #6d6d66;
-  --subtle: #96968e;
-
-  --border: #deded7;
-  --border-strong: #c9c9c0;
-
-  --accent: #315c4a;
-  --accent-hover: #274b3c;
-  --accent-soft: #e5ede8;
-
-  --danger: #b42318;
-  --danger-soft: #fef0ef;
-
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
-  --radius-xl: 24px;
-}
-
-.dark {
-  --background: #171816;
-  --foreground: #f1f1eb;
-
-  --surface: #1d1e1b;
-  --surface-raised: #242521;
-
-  --muted: #aaa9a0;
-  --subtle: #77776f;
-
-  --border: #34352f;
-  --border-strong: #474840;
-
-  --accent: #8eb8a3;
-  --accent-hover: #a4c9b6;
-  --accent-soft: #25352d;
-
-  --danger: #f08a82;
-  --danger-soft: #3a211f;
+  --background: #f8fbfc;
+  --foreground: #17201f;
+  --accent: #20bd91;
 }
 
 * {
@@ -57,15 +16,10 @@ html {
 
 body {
   margin: 0;
-  min-height: 100dvh;
   background: var(--background);
   color: var(--foreground);
-  font-family:
-    ui-sans-serif,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -87,13 +41,19 @@ a {
 }
 
 ::selection {
-  background: var(--foreground);
-  color: var(--background);
+  background: #a7f3d0;
+  color: #17201f;
 }
 
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
+.cm-home {
+  background: #f8fbfc;
+}
+
+.cm-background {
+  background:
+    radial-gradient(ellipse at 45% 25%, rgba(110, 231, 183, .35), transparent 42%),
+    radial-gradient(ellipse at 78% 58%, rgba(196, 181, 253, .36), transparent 40%),
+    linear-gradient(115deg, #fbfcff 0%, #effbf7 48%, #f8f5ff 100%);
 }
 
 ::-webkit-scrollbar {
@@ -101,29 +61,185 @@ a {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--background);
+  background: #f1f5f9;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
+  background: #cbd5e1;
   border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--subtle);
+  background: #94a3b8;
 }
 
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
+
+/* ===== CAREERMATCH SHARED DESIGN SYSTEM ===== */
+
+:root {
+  --cm-ink: #17201f;
+  --cm-muted: #64736e;
+  --cm-green: #10b981;
+  --cm-teal: #0d9488;
+  --cm-violet: #7c3aed;
+  --cm-line: #e2ebe7;
+  --cm-panel: rgba(255,255,255,.88);
+}
+
+body {
+  background: #f8fbfc;
+  color: var(--cm-ink);
+}
+
+main:not(.cm-home) {
+  background:
+    radial-gradient(ellipse at 5% 0%, rgba(167,243,208,.25), transparent 35%),
+    radial-gradient(ellipse at 95% 10%, rgba(221,214,254,.3), transparent 34%),
+    #f8fbfc !important;
+  color: var(--cm-ink) !important;
+  min-height: 100vh;
+}
+
+/* Navigation */
+main:not(.cm-home) header {
+  background: rgba(255,255,255,.82) !important;
+  border-color: var(--cm-line) !important;
+  backdrop-filter: blur(18px);
+  box-shadow: 0 4px 20px rgba(40,70,60,.035);
+}
+
+main:not(.cm-home) header button:first-child {
+  color: #17201f;
+  font-weight: 750;
+  letter-spacing: -.035em;
+}
+
+/* Main content panels and cards */
+main:not(.cm-home) article,
+main:not(.cm-home) section[class*="rounded-2xl"],
+main:not(.cm-home) section[class*="rounded-xl"],
+main:not(.cm-home) div[class*="rounded-2xl"][class*="border"],
+main:not(.cm-home) div[class*="rounded-xl"][class*="border"] {
+  background-color: var(--cm-panel);
+  border-color: var(--cm-line);
+  box-shadow: 0 8px 28px rgba(38,75,62,.045);
+  backdrop-filter: blur(12px);
+  transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+
+main:not(.cm-home) article:hover {
+  border-color: #a7e6cf;
+  box-shadow: 0 14px 36px rgba(38,75,62,.09);
+  transform: translateY(-2px);
+}
+
+/* Typography */
+main:not(.cm-home) [class~="text-slate-900"],
+main:not(.cm-home) [class~="text-slate-800"] {
+  color: #17201f !important;
+}
+
+main:not(.cm-home) [class~="text-slate-700"],
+main:not(.cm-home) [class~="text-slate-600"] {
+  color: #465650 !important;
+}
+
+main:not(.cm-home) [class~="text-slate-500"],
+main:not(.cm-home) [class~="text-slate-400"] {
+  color: #788780 !important;
+}
+
+main:not(.cm-home) [class~="text-indigo-600"],
+main:not(.cm-home) [class~="text-indigo-700"] {
+  color: #6d48c7 !important;
+}
+
+/* Primary actions */
+main:not(.cm-home) button[class~="bg-slate-900"],
+main:not(.cm-home) button[class~="bg-indigo-600"],
+main:not(.cm-home) a[class~="bg-slate-900"] {
+  background: linear-gradient(110deg,#10a979,#0d9488) !important;
+  color: white !important;
+  border: 0;
+  box-shadow: 0 5px 14px rgba(16,185,129,.17);
+}
+
+main:not(.cm-home) button[class~="bg-slate-900"]:hover,
+main:not(.cm-home) button[class~="bg-indigo-600"]:hover,
+main:not(.cm-home) a[class~="bg-slate-900"]:hover {
+  background: linear-gradient(110deg,#059669,#0f766e) !important;
+  transform: translateY(-1px);
+}
+
+main:not(.cm-home) button[class*="border"][class*="rounded"],
+main:not(.cm-home) a[class*="border"][class*="rounded"] {
+  border-color: #d8e6df;
+}
+
+/* Form controls */
+main:not(.cm-home) input:not([type="checkbox"]),
+main:not(.cm-home) select,
+main:not(.cm-home) textarea {
+  background: #fff !important;
+  color: #17201f !important;
+  border: 1px solid #dce8e2 !important;
+  border-radius: 12px;
+}
+
+main:not(.cm-home) input:focus,
+main:not(.cm-home) select:focus,
+main:not(.cm-home) textarea:focus {
+  outline: none;
+  border-color: #34b98c !important;
+  box-shadow: 0 0 0 3px rgba(16,185,129,.12);
+}
+
+/* Status indicators */
+main:not(.cm-home) [class~="bg-green-50"],
+main:not(.cm-home) [class~="bg-emerald-50"] {
+  background: #e9f9f1 !important;
+}
+
+main:not(.cm-home) [class~="text-green-700"],
+main:not(.cm-home) [class~="text-emerald-700"] {
+  color: #087c55 !important;
+}
+
+main:not(.cm-home) [class~="bg-red-50"] {
+  background: #fff1f0 !important;
+}
+
+main:not(.cm-home) [class~="border-red-200"] {
+  border-color: #fecaca !important;
+}
+
+/* Tags and chips */
+main:not(.cm-home) span[class*="rounded-full"],
+main:not(.cm-home) span[class*="rounded-md"] {
+  border-color: #e0eae5;
+}
+
+/* Page spacing and interaction */
+main:not(.cm-home) button,
+main:not(.cm-home) a {
+  transition: background .2s ease, color .2s ease,
+    border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+
+main:not(.cm-home) button:focus-visible,
+main:not(.cm-home) a:focus-visible {
+  outline: 3px solid rgba(16,185,129,.3);
+  outline-offset: 3px;
+}
+
+@media (max-width: 640px) {
+  main:not(.cm-home) section {
+    scroll-margin-top: 80px;
   }
 
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+  main:not(.cm-home) header nav {
+    gap: 10px;
   }
 }
+
+/* ===== END CAREERMATCH SHARED DESIGN SYSTEM ===== */

@@ -1,26 +1,115 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { calculateATSScore } from "@/lib/ats";
 import { calculateResumeScore } from "@/lib/scoring";
-import {
-  extractSkills,
-  findMissingSkills,
-} from "@/lib/matcher";
-import { generateRecommendations } from "@/lib/recommendation";
+
+type Analysis = {
+  model?: string;
+  entities?: Record<string, string[]>;
+  contact?: {
+    email?: string | null;
+    phone?: string[];
+    location?: string[];
+  };
+  education?: {
+    degrees?: string[];
+    institutions?: string[];
+  };
+  experience?: {
+    job_titles?: string[];
+    companies?: string[];
+    dates?: string[];
+  };
+  skills?: {
+    ner_extracted?: unknown[];
+    esco?: unknown[];
+    technical?: unknown[];
+  };
+  statistics?: {
+    ner_entity_count?: number;
+    esco_skill_count?: number;
+    technical_skill_count?: number;
+  };
+};
 
 type ResumeData = {
   file?: {
-    originalName: string;
-    savedName: string;
-    size: number;
-    type: string;
+    originalName?: string;
+    savedName?: string;
+    size?: number;
+    type?: string;
   };
   extractedText?: string;
   textLength?: number;
+  analysis?: Analysis;
 };
+
+function normalizeSkills(items: unknown[] = []): string[] {
+  return items
+    .map((item) => {
+      if (typeof item === "string") return item;
+
+      if (item && typeof item === "object") {
+        const value = item as Record<string, unknown>;
+
+        const keys = [
+          "label",
+          "name",
+          "preferredLabel",
+          "preferred_label",
+          "skill",
+          "title",
+          "skill_label",
+          "preferredName",
+        ];
+
+        for (const key of keys) {
+          if (typeof value[key] === "string") {
+            return value[key] as string;
+          }
+        }
+      }
+
+      return "";
+    })
+    .filter((value): value is string => Boolean(value));
+}
+
+function Section({
+  title,
+  items,
+}: {
+  title: string;
+  items: string[];
+}) {
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <h3 className="mb-5 text-lg font-semibold text-slate-900">
+        {title}
+      </h3>
+
+      {items.length > 0 ? (
+        <div className="flex flex-wrap gap-2">
+          {items.map((item, index) => (
+            <span
+              key={`${item}-${index}`}
+              className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700"
+            >
+              {item}
+            </span>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-slate-500">
+          No information detected.
+        </p>
+      )}
+    </section>
+  );
+}
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -32,46 +121,58 @@ export default function DashboardPage() {
     const storedResume = sessionStorage.getItem("resumeAnalysis");
 
     if (!storedResume) {
-      router.replace("/upload");
+      router.replace("/");
       return;
     }
 
     try {
-      const data = JSON.parse(storedResume);
+      const data = JSON.parse(storedResume) as ResumeData;
+
+      if (!data.analysis) {
+        router.replace("/");
+        return;
+      }
+
       setResume(data);
+      setLoading(false);
     } catch (error) {
       console.error("Failed to load resume:", error);
-      router.replace("/upload");
-      return;
+      router.replace("/");
     }
-
-    setLoading(false);
   }, [router]);
 
-  if (loading) {
+  if (loading || !resume) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-50">
         <div className="text-center">
           <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-slate-900" />
-          <p className="text-slate-600">
-            Analyzing your resume...
-          </p>
+          <p className="text-slate-600">Preparing your resume analysis...</p>
         </div>
       </main>
     );
   }
 
-  if (!resume) {
-    return null;
-  }
-
+  const analysis = resume.analysis!;
   const resumeText = resume.extractedText || "";
 
+  // Existing ATS and resume scoring functions
   const atsResult = calculateATSScore(resumeText);
   const resumeResult = calculateResumeScore(resumeText);
-  const skills = extractSkills(resumeText);
-  const missingSkills = findMissingSkills(resumeText);
-  const recommendations = generateRecommendations(resumeText);
+
+  // Combine all skill sources into one section
+  const skillData = analysis.skills || {};
+
+  const skills = Array.from(
+    new Set([
+      ...normalizeSkills(skillData.technical),
+      ...normalizeSkills(skillData.esco),
+      ...normalizeSkills(skillData.ner_extracted),
+    ])
+  );
+
+  const contact = analysis.contact || {};
+  const education = analysis.education || {};
+  const experience = analysis.experience || {};
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -86,19 +187,19 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex gap-3">
             <button
               onClick={() => router.push("/")}
-              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
             >
               Home
             </button>
 
             <button
-              onClick={() => router.push("/jobs")}
-              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+              onClick={() => router.push("/")}
+              className="rounded-lg bg-slate-900 px-4 py-2 text-sm text-white hover:bg-slate-800"
             >
-              Find Jobs
+              New Resume
             </button>
           </div>
         </div>
@@ -115,61 +216,63 @@ export default function DashboardPage() {
           </h2>
 
           <p className="mt-2 text-slate-600">
-            Analysis results for{" "}
-            <span className="font-medium text-slate-900">
+            Results for{" "}
+            <span className="font-semibold text-slate-900">
               {resume.file?.originalName || "your resume"}
             </span>
           </p>
         </div>
 
-        <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {/* SCORE CARDS */}
+
+        <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-sm font-medium text-slate-500">
+            <p className="text-sm text-slate-500">
               ATS Score
             </p>
 
-            <div className="mt-3 flex items-end gap-2">
-              <span className="text-4xl font-bold text-slate-900">
-                {atsResult.score}
-              </span>
-              <span className="mb-1 text-sm text-slate-500">
-                / 100
-              </span>
-            </div>
+            <p className="mt-3 text-4xl font-bold text-slate-900">
+              {atsResult.score}
+              <span className="text-lg text-slate-400"> / 100</span>
+            </p>
 
             <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
               <div
-                className="h-full rounded-full bg-slate-900"
-                style={{ width: `${atsResult.score}%` }}
+                className="h-full rounded-full bg-blue-600"
+                style={{
+                  width: `${Math.max(0, Math.min(100, atsResult.score))}%`,
+                }}
               />
             </div>
+
+            <p className="mt-2 text-xs text-slate-500">
+              Rule-based ATS compatibility estimate
+            </p>
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-sm font-medium text-slate-500">
+            <p className="text-sm text-slate-500">
               Resume Score
             </p>
 
-            <div className="mt-3 flex items-end gap-2">
-              <span className="text-4xl font-bold text-slate-900">
-                {resumeResult.score}
-              </span>
-              <span className="mb-1 text-sm text-slate-500">
-                / 100
-              </span>
-            </div>
+            <p className="mt-3 text-4xl font-bold text-slate-900">
+              {resumeResult.score}
+              <span className="text-lg text-slate-400"> / 100</span>
+            </p>
 
             <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
               <div
-                className="h-full rounded-full bg-slate-900"
-                style={{ width: `${resumeResult.score}%` }}
+                className="h-full rounded-full bg-blue-600"
+                style={{
+                  width: `${Math.max(0, Math.min(100, resumeResult.score))}%`,
+                }}
               />
             </div>
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-sm font-medium text-slate-500">
-              Skills Detected
+            <p className="text-sm text-slate-500">
+              Technical Skills
             </p>
 
             <p className="mt-3 text-4xl font-bold text-slate-900">
@@ -177,12 +280,12 @@ export default function DashboardPage() {
             </p>
 
             <p className="mt-2 text-sm text-slate-500">
-              relevant skills found
+              Skills identified
             </p>
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <p className="text-sm font-medium text-slate-500">
+            <p className="text-sm text-slate-500">
               Resume Words
             </p>
 
@@ -191,125 +294,79 @@ export default function DashboardPage() {
             </p>
 
             <p className="mt-2 text-sm text-slate-500">
-              words analyzed
+              Words analyzed
             </p>
           </div>
         </section>
 
-        <section className="mt-8 grid gap-6 lg:grid-cols-2">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="mb-5">
-              <h3 className="text-lg font-semibold text-slate-900">
-                Skills Detected
-              </h3>
+        {/* SKILLS */}
 
-              <p className="mt-1 text-sm text-slate-500">
-                Skills identified from your resume.
-              </p>
-            </div>
-
-            {skills.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {skills.map((skill) => (
-                  <span
-                    key={skill}
-                    className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-700"
-                  >
-                    {skill}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-slate-500">
-                No matching skills were detected.
-              </p>
-            )}
-          </div>
-
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="mb-5">
-              <h3 className="text-lg font-semibold text-slate-900">
-                Skills You Could Add
-              </h3>
-
-              <p className="mt-1 text-sm text-slate-500">
-                Common skills that were not detected.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              {missingSkills.map((skill) => (
-                <span
-                  key={skill}
-                  className="rounded-full border border-slate-200 px-3 py-1.5 text-sm text-slate-600"
-                >
-                  {skill}
-                </span>
-              ))}
-            </div>
-          </div>
+        <section className="mt-8">
+          <Section
+            title="Technical Skills"
+            items={skills}
+          />
         </section>
 
-        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="mb-5">
-            <h3 className="text-lg font-semibold text-slate-900">
-              ATS Keyword Analysis
-            </h3>
+        {/* ATS KEYWORD ANALYSIS */}
 
-            <p className="mt-1 text-sm text-slate-500">
-              Keywords detected against our current ATS keyword set.
-            </p>
-          </div>
+        <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-slate-900">
+            ATS Keyword Analysis
+          </h3>
 
-          <div className="grid gap-6 md:grid-cols-3">
+          <p className="mt-1 text-sm text-slate-500">
+            Keywords identified using your existing ATS keyword analysis.
+          </p>
+
+          <div className="mt-6 grid gap-6 sm:grid-cols-3">
             <div>
-              <p className="text-sm text-slate-500">
-                Keyword Match
-              </p>
-
+              <p className="text-sm text-slate-500">Keyword Match</p>
               <p className="mt-2 text-3xl font-bold text-slate-900">
                 {atsResult.keywordMatchPercentage}%
               </p>
             </div>
 
             <div>
-              <p className="text-sm text-slate-500">
-                Keywords Found
-              </p>
-
+              <p className="text-sm text-slate-500">Keywords Found</p>
               <p className="mt-2 text-3xl font-bold text-slate-900">
                 {atsResult.matchedKeywords.length}
               </p>
             </div>
 
             <div>
-              <p className="text-sm text-slate-500">
-                Keywords Missing
-              </p>
-
+              <p className="text-sm text-slate-500">Keywords Missing</p>
               <p className="mt-2 text-3xl font-bold text-slate-900">
                 {atsResult.missingKeywords.length}
               </p>
             </div>
           </div>
+
+          <div className="mt-6 grid gap-6 md:grid-cols-2">
+            <Section
+              title="Keywords Found"
+              items={atsResult.matchedKeywords}
+            />
+
+            <Section
+              title="Suggested Keywords"
+              items={atsResult.missingKeywords}
+            />
+          </div>
         </section>
 
-        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="mb-5">
-            <h3 className="text-lg font-semibold text-slate-900">
-              Resume Sections
-            </h3>
+        {/* RESUME SECTIONS */}
 
-            <p className="mt-1 text-sm text-slate-500">
-              Sections identified in your resume.
-            </p>
-          </div>
+        <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h3 className="text-lg font-semibold text-slate-900">
+            Resume Sections
+          </h3>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="mt-5 flex flex-wrap gap-3">
             {resumeResult.sectionsFound.map((section) => (
               <span
                 key={section}
-                className="rounded-lg bg-slate-100 px-4 py-2 text-sm font-medium capitalize text-slate-700"
+                className="rounded-lg bg-green-50 px-4 py-2 text-sm font-medium capitalize text-green-700"
               >
                 ✓ {section}
               </span>
@@ -326,76 +383,51 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-slate-900">
-                Recommended Jobs
-              </h3>
+        {/* EDUCATION AND EXPERIENCE */}
 
-              <p className="mt-1 text-sm text-slate-500">
-                Job roles matched to your resume.
-              </p>
-            </div>
+        <section className="mt-8 grid gap-6 lg:grid-cols-2">
+          <Section
+            title="Education"
+            items={[
+              ...(education.degrees || []),
+              ...(education.institutions || []),
+            ]}
+          />
 
-            <button
-              onClick={() => router.push("/recommendations")}
-              className="text-sm font-semibold text-blue-600 hover:text-blue-700"
-            >
-              View All →
-            </button>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            {recommendations.map((job) => (
-              <div
-                key={job.title}
-                className="rounded-xl border border-slate-200 p-5 transition hover:border-slate-300"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h4 className="font-semibold text-slate-900">
-                      {job.title}
-                    </h4>
-
-                    <p className="mt-1 text-sm text-slate-500">
-                      {job.company}
-                    </p>
-
-                    <p className="mt-1 text-sm text-slate-500">
-                      {job.location}
-                    </p>
-                  </div>
-
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
-                    {job.match}% match
-                  </span>
-                </div>
-
-                <p className="mt-4 text-sm leading-6 text-slate-600">
-                  {job.reason}
-                </p>
-              </div>
-            ))}
-          </div>
+          <Section
+            title="Experience"
+            items={[
+              ...(experience.job_titles || []),
+              ...(experience.companies || []),
+              ...(experience.dates || []),
+            ]}
+          />
         </section>
 
-        <div className="mt-8 flex flex-wrap justify-end gap-3">
+        {/* ACTIONS */}
+
+        <div className="mt-8 flex justify-end gap-3">
           <button
-            onClick={() => router.push("/analyze")}
-            className="rounded-xl border border-slate-300 px-6 py-3 font-semibold text-slate-700 transition hover:bg-white"
+            onClick={() => router.push("/recommendations")}
+            className="rounded-xl border border-slate-300 px-6 py-3 font-semibold text-slate-700 hover:bg-white"
           >
             View Resume
           </button>
 
           <button
             onClick={() => router.push("/jobs")}
-            className="rounded-xl bg-slate-900 px-6 py-3 font-semibold text-white transition hover:bg-slate-800"
+            className="rounded-xl bg-slate-900 px-6 py-3 font-semibold text-white hover:bg-slate-800"
           >
-            Explore Jobs →
+            Explore Jobs
           </button>
         </div>
       </div>
     </main>
   );
 }
+
+
+
+
+
+
